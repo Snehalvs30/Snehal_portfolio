@@ -11,10 +11,15 @@ const seg = (p: number, a: number, b: number) => clamp01((p - a) / (b - a));
 
 /* Where the photo frame sits inside the pinned screen. */
 function frameRect(W: number, H: number) {
+  if (W < 768) {
+    // phones: the photo across the top, the text underneath
+    const w = W - 40;
+    return { l: 20, t: H * 0.08, w, h: Math.min(H * 0.44, w * 1.15) };
+  }
   return { l: Math.max(20, W * 0.04), t: H * 0.1, w: W * 0.4, h: H * 0.8 };
 }
 
-function IntroText({ on }: { on: boolean }) {
+function IntroText({ on, compact = false }: { on: boolean; compact?: boolean }) {
   const rise = (delay: number) => ({
     initial: false as const,
     animate: on ? { y: "0%" } : { y: "105%" },
@@ -27,7 +32,7 @@ function IntroText({ on }: { on: boolean }) {
   });
   return (
     <>
-      <h2 className="font-condensed text-[clamp(2.4rem,4.6vw,4.4rem)] font-bold uppercase leading-[1.02]">
+      <h2 className={`font-condensed font-bold uppercase leading-[1.02] ${compact ? "text-[clamp(1.9rem,4.6vw,4.4rem)]" : "text-[clamp(2.4rem,4.6vw,4.4rem)]"}`}>
         <span className="block overflow-hidden pb-[0.04em]">
           <motion.span className="block" {...rise(0)}>
             {intro.headline[0]}
@@ -42,7 +47,8 @@ function IntroText({ on }: { on: boolean }) {
       <motion.p className="mt-5 max-w-[36rem] text-[clamp(16px,1.3vw,19px)] leading-relaxed" {...fade(0.3)}>
         {intro.lead}
       </motion.p>
-      <motion.p className="mt-5 max-w-[36rem] text-[15px] leading-relaxed text-muted" {...fade(0.42)}>
+      {/* on phones, the zoom version skips the longer paragraph so everything fits under the photo */}
+      <motion.p className={`mt-5 max-w-[36rem] text-[15px] leading-relaxed text-muted ${compact ? "max-md:hidden" : ""}`} {...fade(0.42)}>
         {intro.body}
       </motion.p>
       {intro.personal && (
@@ -125,7 +131,7 @@ function ZoomIntro() {
     if (!pin || !svg || !g || !black || !photo || !grain) return;
 
     // 1. zoom into the full stop
-    const a = seg(p, 0, 0.32);
+    const a = seg(p, 0, 0.26);
     const s = Math.exp(a * Math.log(180));
     const { x, y } = dot.current;
     g.setAttribute("transform", `translate(${x} ${y}) scale(${s.toFixed(3)}) translate(${-x} ${-y})`);
@@ -136,7 +142,7 @@ function ZoomIntro() {
     const W = pin.clientWidth;
     const H = pin.clientHeight;
     const f = frameRect(W, H);
-    const b = seg(p, 0.32, 0.48);
+    const b = seg(p, 0.26, 0.38);
     const e = 1 - Math.pow(1 - b, 3);
     black.style.display = full && b < 1 ? "block" : "none";
     black.style.left = `${f.l * e}px`;
@@ -145,14 +151,14 @@ function ZoomIntro() {
     black.style.height = `${H + (f.h - H) * e}px`;
 
     // 3. the photo develops
-    const d = seg(p, 0.48, 0.74);
+    const d = seg(p, 0.38, 0.59);
     photo.style.opacity = d <= 0 ? "0" : Math.min(1, d * 1.6).toFixed(2);
     photo.style.filter = `brightness(${(0.15 + 0.85 * d).toFixed(2)}) contrast(${(0.6 + 0.4 * d).toFixed(2)})`;
     grain.style.opacity = (d > 0 && d < 1 ? 0.5 * (1 - Math.abs(d - 0.5) * 1.6) : 0).toFixed(2);
     setDeveloped(d >= 1);
 
     // 4. the text
-    setTextOn(p > 0.7);
+    setTextOn(p > 0.56);
   }, []);
 
   useMotionValueEvent(scrollYProgress, "change", apply);
@@ -176,13 +182,12 @@ function ZoomIntro() {
   const f = frameRect(size.W, size.H);
 
   return (
-    // <section ref={sectionRef} className="relative h-[320vh]" aria-labelledby="intro-title">
     <section ref={sectionRef} className="relative h-[400vh]" aria-labelledby="intro-title">
       <div ref={pinRef} className="sticky top-0 h-svh overflow-hidden">
         {/* photo frame */}
         <div className="absolute overflow-hidden bg-[#0b0b0b]" style={{ left: f.l, top: f.t, width: f.w, height: f.h }}>
           <div ref={photoRef} className="absolute inset-0 opacity-0">
-            <Image src={intro.photo.src} alt={intro.photo.alt} fill sizes="40vw" className="object-cover object-[46%_28%]" />
+            <Image src={intro.photo.src} alt={intro.photo.alt} fill sizes="(min-width: 768px) 40vw, 100vw" className="object-cover object-[46%_28%]" />
           </div>
           <div ref={grainRef} className="film-grain opacity-0 motion-reduce:animate-none" aria-hidden="true" />
         </div>
@@ -194,11 +199,18 @@ function ZoomIntro() {
         </p>
 
         {/* text */}
-        <div className="absolute" style={{ left: f.l + f.w + Math.max(40, size.W * 0.05), right: "clamp(20px,4vw,60px)", top: size.H * 0.12 }}>
+        <div
+          className="absolute"
+          style={
+            size.W < 768
+              ? { left: 20, right: 20, top: f.t + f.h + 34 } // phones: under the photo
+              : { left: f.l + f.w + Math.max(40, size.W * 0.05), right: "clamp(20px,4vw,60px)", top: size.H * 0.12 }
+          }
+        >
           <span id="intro-title" className="sr-only">
             {intro.zoomText}.
           </span>
-          <IntroText on={textOn} />
+          <IntroText on={textOn} compact />
         </div>
 
         {/* the black screen after flying through the full stop */}
@@ -237,18 +249,8 @@ export default function ThisIsMe() {
   const reduceMotion = useReducedMotion();
   return (
     <div id="intro">
-      {reduceMotion ? (
-        <StaticIntro />
-      ) : (
-        <>
-          <div className="hidden md:block">
-            <ZoomIntro />
-          </div>
-          <section className="md:hidden" aria-label={`${intro.zoomText}.`}>
-            <StaticIntro />
-          </section>
-        </>
-      )}
+      {/* the zoom on every screen; the simple version only for visitors with reduced motion */}
+      {reduceMotion ? <StaticIntro /> : <ZoomIntro />}
     </div>
   );
 }

@@ -87,12 +87,26 @@ function Details({ project, index, total, showNumber = true }: { project: Projec
 
 /* One project: a small picture with its name huge and pale behind it.
    As you scroll, the picture grows, the name drifts sideways, and the details card appears. */
-function ProjectScene({ project, index, total, animate }: { project: Project; index: number; total: number; animate: boolean }) {
+function ProjectScene({
+  project,
+  index,
+  total,
+  animate,
+  isDesktop,
+}: {
+  project: Project;
+  index: number;
+  total: number;
+  animate: boolean;
+  isDesktop: boolean;
+}) {
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
   // the picture grows from 32% to its full size (at most 62% of the screen width, 62% of its height)
-  const grow = useTransform(scrollYProgress, [0, 0.7], [0.32, 1], { ease: easeInOut });
-  const width = useTransform(grow, (g) => `calc(${g} * min(62vw, 99.2svh))`);
+  // computers: up to 62% of the screen width; phones: the full width minus the margins
+  const full = isDesktop ? "min(62vw, 99.2svh)" : "(100vw - 2.5rem)";
+  const grow = useTransform(scrollYProgress, [0, 0.7], [isDesktop ? 0.32 : 0.45, 1], { ease: easeInOut });
+  const width = useTransform(grow, (g) => `calc(${g} * ${full})`);
   // the pale name drifts from right to left the whole time
   const drift = useTransform(scrollYProgress, [0, 1], ["30%", "-30%"]);
   const ghostOpacity = useTransform(grow, [0.32, 1], [1, 0.4]);
@@ -119,12 +133,12 @@ function ProjectScene({ project, index, total, animate }: { project: Project; in
 
   return (
     <section ref={ref} className="relative h-[220vh]" aria-label={project.title}>
-      <div className="sticky top-0 flex h-svh items-center justify-center overflow-hidden">
+      <div className={`sticky top-0 flex h-svh items-center justify-center overflow-hidden ${isDesktop ? "" : "flex-col px-5"}`}>
         {/* the name, huge and pale, drifting behind the picture */}
-        <div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2" aria-hidden="true">
+        <div className={`pointer-events-none absolute inset-x-0 -translate-y-1/2 ${isDesktop ? "top-1/2" : "top-[38%]"}`} aria-hidden="true">
           <motion.p
             style={{ x: drift, opacity: ghostOpacity }}
-            className="whitespace-nowrap text-center font-condensed text-[22vw] font-bold uppercase leading-none text-[#f1f1f0]"
+            className={`whitespace-nowrap text-center font-condensed font-bold uppercase leading-none text-[#f1f1f0] ${isDesktop ? "text-[22vw]" : "text-[44vw]"}`}
           >
             {project.title}
           </motion.p>
@@ -133,7 +147,7 @@ function ProjectScene({ project, index, total, animate }: { project: Project; in
         {/* big pale number, top left, like the original projects section */}
         <p
           aria-hidden="true"
-          className={`pointer-events-none absolute left-8 top-[clamp(72px,11vh,110px)] z-20 font-condensed text-[clamp(5rem,10vw,9rem)] font-bold leading-[0.9] text-[#e6e6e4] transition-[opacity,translate] duration-700 ease-[cubic-bezier(.22,1,.36,1)] ${
+          className={`pointer-events-none absolute left-5 top-[clamp(72px,11vh,110px)] z-20 md:left-8 font-condensed text-[clamp(5rem,10vw,9rem)] font-bold leading-[0.9] text-[#e6e6e4] transition-[opacity,translate] duration-700 ease-[cubic-bezier(.22,1,.36,1)] ${
             started ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
           }`}
         >
@@ -146,7 +160,11 @@ function ProjectScene({ project, index, total, animate }: { project: Project; in
 
         {/* details card, bottom left, overlapping the picture's corner */}
         <div
-          className={`absolute bottom-[clamp(24px,6vh,60px)] left-8 z-20 max-w-[34rem] rounded-xl bg-white/95 px-5 py-4 shadow-[0_10px_30px_rgba(0,0,0,0.08)] transition-[opacity,translate] duration-500 ease-[cubic-bezier(.22,1,.36,1)] ${
+          className={`${
+            isDesktop
+              ? "absolute bottom-[clamp(24px,6vh,60px)] left-8 max-w-[34rem] rounded-xl bg-white/95 px-5 py-4 shadow-[0_10px_30px_rgba(0,0,0,0.08)]"
+              : "relative mt-5 w-full"
+          } z-20 transition-[opacity,translate] duration-500 ease-[cubic-bezier(.22,1,.36,1)] ${
             showCard ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-3.5 opacity-0"
           }`}
         >
@@ -161,14 +179,14 @@ export default function Projects() {
   const items = projects.items;
   const reduceMotion = Boolean(useReducedMotion());
   const isDesktop = useIsDesktop();
-  const animate = isDesktop && !reduceMotion;
+  const animate = !reduceMotion; // animated on phones too
 
   return (
     <section id="projects" aria-labelledby="projects-title" className="relative min-h-svh">
       {animate ? (
         // "Selected projects" stays at the top until the last project has finished
         <div className="sticky top-0 z-30 h-0">
-          <div className="absolute left-8 top-10">
+          <div className="absolute left-5 top-6 md:left-8 md:top-10">
             <SectionLabel id="projects-title">{projects.label}</SectionLabel>
           </div>
         </div>
@@ -179,7 +197,7 @@ export default function Projects() {
       )}
       <div className={animate ? "" : "px-5 sm:px-8"}>
         {items.map((project, i) => (
-          <ProjectScene key={project.title} project={project} index={i} total={items.length} animate={animate} />
+          <ProjectScene key={project.title} project={project} index={i} total={items.length} animate={animate} isDesktop={isDesktop} />
         ))}
       </div>
     </section>
