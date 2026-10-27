@@ -16,8 +16,9 @@ export default function SmoothScroll({ children }: { children: ReactNode }) {
     if (reduceMotion) return; // no smooth scrolling for reduced-motion users
     // const lenis = new Lenis({ autoRaf: true, lerp: 0.1 });
         // lerp: lower = smoother and a little floatier (0.1 was the default feel)
-    const lenis = new Lenis({ autoRaf: true, lerp: 0.075, smoothWheel: true, wheelMultiplier: 0.9 });
-    lenisRef.current = lenis;
+    // const lenis = new Lenis({ autoRaf: true, lerp: 0.075, smoothWheel: true, wheelMultiplier: 0.9 });
+    // lenisRef.current = lenis;
+    const lenis = new Lenis({ autoRaf: true, lerp: 0.075, smoothWheel: true, wheelMultiplier: 0.9, anchors: true });
     return () => {
       lenis.destroy();
       lenisRef.current = null;

@@ -173,11 +173,35 @@ export default function Hero() {
 
         {/* availability (top right) and profile links (bottom left) */}
         <motion.div aria-hidden="true" className="absolute inset-x-5 top-[72px] h-px origin-right bg-[#eee] sm:inset-x-8" initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 1.2, ease: [0.65, 0, 0.35, 1], delay: 0.2 }} />
-        <motion.p className={`absolute right-5 top-6 z-10 sm:right-8 ${spaced}`} style={move ? { opacity: smallOpacity } : undefined}>
+        {/* <motion.p className={`absolute right-5 top-6 z-10 sm:right-8 ${spaced}`} style={move ? { opacity: smallOpacity } : undefined}>
           <motion.span className="inline-block" {...fadeDown(0)}>
             {hero.availability}
           </motion.span>
+        </motion.p> */}
+                {/* availability, centred, with a pulsing green dot (hidden on phones to keep the bar clear) */}
+        <motion.p
+          className={`absolute left-1/2 top-6 z-10 hidden -translate-x-1/2 whitespace-nowrap md:block ${spaced}`}
+          style={move ? { opacity: smallOpacity } : undefined}
+        >
+          <motion.span className="inline-flex items-center gap-2.5" {...fadeDown(0)}>
+            <span aria-hidden="true" className="inline-block size-[7px] animate-pulse rounded-full bg-[#1f9d55] motion-reduce:animate-none" />
+            {hero.availability}
+          </motion.span>
         </motion.p>
+
+        {/* Get in touch, top right: scrolls down to the Contact section */}
+        <motion.div className="absolute right-5 top-3.5 z-10 sm:right-8" style={move ? { opacity: smallOpacity } : undefined}>
+          <motion.a
+            href="#contact"
+            className="group inline-flex items-center gap-2.5 rounded-full bg-ink px-[18px] py-2.5 font-condensed text-[13px] uppercase tracking-[0.25em] text-white transition-colors duration-300 hover:bg-accent"
+            {...fadeDown(0.1)}
+          >
+            Get in touch
+            <span aria-hidden="true" className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5">
+              ↗
+            </span>
+          </motion.a>
+        </motion.div>
         <motion.nav
           aria-label="Profiles"
           className={`absolute bottom-10 left-5 z-10 sm:bottom-16 sm:left-8 md:left-[9vw] ${spaced}`}
