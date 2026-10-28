@@ -409,7 +409,7 @@ export const site = {
   medium: "https://shindesnehal277.medium.com/", 
   github: "https://github.com/Snehalvs30", // TODO: add your GitHub profile URL, e.g. "https://github.com/your-username"
   resume: "https://drive.google.com/file/d/16c_L5TjwQksvaaHR1YWX6cPkrfPO451Q/view?usp=sharing", 
-  siteUrl: "https://snehal-portfolio.vercel.app", // TODO: replace with your real Vercel URL after deploying
+  siteUrl: "https://snehalshinde.com", // TODO: replace with your real Vercel URL after deploying
   // Note: your phone number is intentionally NOT included anywhere on the site.
 };
 
